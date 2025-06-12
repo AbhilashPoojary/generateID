@@ -1,65 +1,490 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>My Website</title>
-    <link rel="stylesheet" href="./style.css" />
-    <link rel="icon" href="./favicon.ico" type="image/x-icon" />
-  </head>
-  <body>
-    <main>
-      <h1>Welcome to My Website</h1>
-    </main>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unique ID Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        
+        .id-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            font-weight: bold;
+            word-break: break-all;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .loading {
+            background: #e9ecef;
+            color: #6c757d;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-style: italic;
+        }
+        
+        .description {
+            color: #6c757d;
+            font-size: 14px;
+            line-height: 1.6;
+            max-width: 450px;
+            margin: 0 auto;
+        }
+        
+        .status {
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .success { 
+            background: #d1edff; 
+            color: #0c5460; 
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 Your Unique Device ID</h1>
+        
+        <div id="loadingMessage" class="loading">
+            Generating your unique device identifier...
+        </div>
+        
+        <div id="uniqueId" class="id-display" style="display: none;"></div>
+        
+        <div id="status" class="status" style="display: none;"></div>
+        
+        <div class="description">
+            This ID is unique to your device and remains consistent across browser sessions, even after clearing browsing data. It's generated using your device's hardware characteristics.
+        </div>
+    </div>
+
     <script>
-      async function getOrCreateDeviceId() {
-        const dbName = "deviceDB";
-        const storeName = "deviceStore";
-
-        // Open IndexedDB
-        const db = await new Promise((resolve, reject) => {
-          const request = indexedDB.open(dbName, 1);
-          request.onerror = () => reject(request.error);
-          request.onupgradeneeded = () => {
-            const db = request.result;
-            if (!db.objectStoreNames.contains(storeName)) {
-              db.createObjectStore(storeName);
+        class UniqueDeviceId {
+            constructor() {
+                this.storageKey = 'device_unique_id';
             }
-          };
-          request.onsuccess = () => resolve(request.result);
-        });
 
-        // Try reading existing ID
-        const existingId = await new Promise((resolve, reject) => {
-          const tx = db.transaction(storeName, "readonly");
-          const store = tx.objectStore(storeName);
-          const getRequest = store.get("device_id");
-          getRequest.onsuccess = () => resolve(getRequest.result);
-          getRequest.onerror = () => reject(getRequest.error);
-        });
+            // Generate canvas fingerprint
+            getCanvasFingerprint() {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                canvas.width = 280;
+                canvas.height = 60;
+                
+                // Complex drawing pattern
+                ctx.textBaseline = 'top';
+                ctx.font = '14px Arial';
+                ctx.fillStyle = '#f60';
+                ctx.fillRect(125, 1, 62, 20);
+                ctx.fillStyle = '#069';
+                ctx.fillText('Device fingerprint canvas 🔒', 2, 15);
+                ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
+                ctx.fillText('Unique browser signature', 4, 35);
+                
+                // Geometric shapes
+                ctx.beginPath();
+                ctx.arc(50, 50, 20, 0, 2 * Math.PI);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(100, 10);
+                ctx.lineTo(120, 30);
+                ctx.lineTo(100, 50);
+                ctx.closePath();
+                ctx.fill();
+                
+                return canvas.toDataURL();
+            }
 
-        // If found, return it
-        if (existingId) {
-          return existingId;
+            // Generate WebGL fingerprint
+            getWebGLFingerprint() {
+                try {
+                    const canvas = document.createElement('canvas');
+                    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                    
+                    if (!gl) return 'no-webgl-support';
+                    
+                    // Get renderer info
+                    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                    if (debugInfo) {
+                        const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+                        const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                        return `${vendor}|${renderer}`;
+                    }
+                    
+                    // Fallback to basic WebGL info
+                    return `${gl.getParameter(gl.VENDOR)}|${gl.getParameter(gl.RENDERER)}`;
+                } catch (e) {
+                    return 'webgl-error';
+                }
+            }
+
+            // Generate audio context fingerprint
+            getAudioFingerprint() {
+                return new Promise((resolve) => {
+                    try {
+                        const AudioContext = window.AudioContext || window.webkitAudioContext;
+                        if (!AudioContext) {
+                            resolve('no-audio-context');
+                            return;
+                        }
+                        
+                        const audioContext = new AudioContext();
+                        const oscillator = audioContext.createOscillator();
+                        const analyser = audioContext.createAnalyser();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.type = 'triangle';
+                        oscillator.frequency.setValueAtTime(10000, audioContext.currentTime);
+                        
+                        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                        
+                        oscillator.connect(analyser);
+                        analyser.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        oscillator.start(0);
+                        
+                        setTimeout(() => {
+                            try {
+                                const data = new Uint8Array(analyser.frequencyBinCount);
+                                analyser.getByteFrequencyData(data);
+                                
+                                const fingerprint = Array.from(data)
+                                    .slice(0, 30)
+                                    .reduce((acc, val) => acc + val, 0)
+                                    .toString(36);
+                                
+                                oscillator.stop();
+                                audioContext.close();
+                                resolve(fingerprint);
+                            } catch (e) {
+                                resolve('audio-processing-error');
+                            }
+                        }, 50);
+                    } catch (e) {
+                        resolve('audio-context-error');
+                    }
+                });
+            }
+
+            // Get comprehensive system information
+            getSystemInfo() {
+                const nav = navigator;
+                const screen = window.screen;
+                
+                return {
+                    // Basic system info
+                    userAgent: nav.userAgent,
+                    platform: nav.platform,
+                    language: nav.language,
+                    languages: nav.languages ? nav.languages.join(',') : '',
+                    
+                    // Hardware info
+                    hardwareConcurrency: nav.hardwareConcurrency || 0,
+                    deviceMemory: nav.deviceMemory || 0,
+                    maxTouchPoints: nav.maxTouchPoints || 0,
+                    
+                    // Screen info
+                    screenWidth: screen.width,
+                    screenHeight: screen.height,
+                    colorDepth: screen.colorDepth,
+                    pixelDepth: screen.pixelDepth,
+                    availWidth: screen.availWidth,
+                    availHeight: screen.availHeight,
+                    
+                    // Timezone and locale
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    timezoneOffset: new Date().getTimezoneOffset(),
+                    
+                    // Browser capabilities
+                    cookieEnabled: nav.cookieEnabled,
+                    doNotTrack: nav.doNotTrack || 'unspecified',
+                    
+                    // Additional entropy
+                    pixelRatio: window.devicePixelRatio || 1,
+                    innerWidth: window.innerWidth,
+                    innerHeight: window.innerHeight
+                };
+            }
+
+            // Get additional static hardware characteristics
+            getAdditionalHardwareInfo() {
+                const additionalInfo = {
+                    // Media devices (cameras, microphones)
+                    mediaDevices: navigator.mediaDevices ? 'supported' : 'not-supported',
+                    
+                    // WebRTC capabilities
+                    webRTC: window.RTCPeerConnection ? 'supported' : 'not-supported',
+                    
+                    // Battery API
+                    battery: navigator.getBattery ? 'supported' : 'not-supported',
+                    
+                    // Geolocation
+                    geolocation: navigator.geolocation ? 'supported' : 'not-supported',
+                    
+                    // Connection info
+                    connection: navigator.connection ? {
+                        effectiveType: navigator.connection.effectiveType || 'unknown',
+                        downlink: navigator.connection.downlink || 0
+                    } : 'not-supported',
+                    
+                    // Permissions API
+                    permissions: navigator.permissions ? 'supported' : 'not-supported',
+                    
+                    // Service Worker
+                    serviceWorker: 'serviceWorker' in navigator ? 'supported' : 'not-supported',
+                    
+                    // WebGL extensions (static)
+                    webGLExtensions: this.getWebGLExtensions(),
+                    
+                    // Font detection
+                    fonts: this.getAvailableFonts()
+                };
+                
+                return JSON.stringify(additionalInfo);
+            }
+            
+            // Get WebGL extensions
+            getWebGLExtensions() {
+                try {
+                    const canvas = document.createElement('canvas');
+                    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                    if (!gl) return [];
+                    
+                    return gl.getSupportedExtensions() || [];
+                } catch (e) {
+                    return [];
+                }
+            }
+            
+            // Detect available fonts
+            getAvailableFonts() {
+                const testFonts = [
+                    'Arial', 'Helvetica', 'Times New Roman', 'Courier New', 'Verdana',
+                    'Georgia', 'Palatino', 'Garamond', 'Bookman', 'Comic Sans MS',
+                    'Trebuchet MS', 'Arial Black', 'Impact'
+                ];
+                
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                const baseFontSize = '72px';
+                const testString = 'mmmmmmmmmmlli';
+                
+                // Measure with default font
+                context.font = baseFontSize + ' monospace';
+                const defaultWidth = context.measureText(testString).width;
+                
+                const availableFonts = [];
+                
+                testFonts.forEach(font => {
+                    context.font = baseFontSize + ' ' + font + ', monospace';
+                    const width = context.measureText(testString).width;
+                    if (width !== defaultWidth) {
+                        availableFonts.push(font);
+                    }
+                });
+                
+                return availableFonts;
+            }
+
+            // Generate hash from string
+            async hashString(str) {
+                const encoder = new TextEncoder();
+                const data = encoder.encode(str);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            }
+
+            // Generate comprehensive device fingerprint
+            async generateDeviceFingerprint() {
+                const canvas = this.getCanvasFingerprint();
+                const webgl = this.getWebGLFingerprint();
+                const audio = await this.getAudioFingerprint();
+                const system = this.getSystemInfo();
+                const additional = this.getAdditionalHardwareInfo();
+                
+                // Combine all STATIC fingerprint components
+                const components = {
+                    canvas: await this.hashString(canvas),
+                    webgl: await this.hashString(webgl),
+                    audio: await this.hashString(audio),
+                    system: await this.hashString(JSON.stringify(system)),
+                    additional: await this.hashString(additional)
+                };
+
+                // Create final fingerprint
+                const combinedString = Object.values(components).join('|');
+                return await this.hashString(combinedString);
+            }
+
+            // Storage operations
+            async openIndexedDB() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open('UniqueDeviceDB', 1);
+                    
+                    request.onerror = () => reject(request.error);
+                    request.onsuccess = () => resolve(request.result);
+                    
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains('ids')) {
+                            db.createObjectStore('ids');
+                        }
+                    };
+                });
+            }
+
+            async storeInIndexedDB(key, value) {
+                try {
+                    const db = await this.openIndexedDB();
+                    const transaction = db.transaction(['ids'], 'readwrite');
+                    const store = transaction.objectStore('ids');
+                    await store.put(value, key);
+                    db.close();
+                } catch (e) {
+                    console.error('IndexedDB store error:', e);
+                }
+            }
+
+            async getFromIndexedDB(key) {
+                try {
+                    const db = await this.openIndexedDB();
+                    const transaction = db.transaction(['ids'], 'readonly');
+                    const store = transaction.objectStore('ids');
+                    
+                    return new Promise((resolve) => {
+                        const request = store.get(key);
+                        request.onsuccess = () => resolve(request.result);
+                        request.onerror = () => resolve(null);
+                    });
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            // Main method to get unique device ID
+            async getUniqueDeviceId() {
+                // Try to get from storage first
+                let storedData = localStorage.getItem(this.storageKey) ||
+                                await this.getFromIndexedDB(this.storageKey);
+
+                if (storedData) {
+                    try {
+                        const parsed = JSON.parse(storedData);
+                        
+                        // Verify fingerprint hasn't changed significantly
+                        const currentFingerprint = await this.generateDeviceFingerprint();
+                        
+                        // If fingerprint is similar (allowing for minor variations), return stored ID
+                        if (parsed.fingerprint === currentFingerprint) {
+                            return {
+                                id: parsed.id,
+                                isNew: false,
+                                created: parsed.created
+                            };
+                        }
+                    } catch (e) {
+                        // Invalid stored data, generate new
+                    }
+                }
+
+                // Generate unique ID based ONLY on hardware fingerprint
+                const fingerprint = await this.generateDeviceFingerprint();
+                
+                // Use only fingerprint for consistent ID generation
+                const uniqueId = fingerprint.substring(0, 24).toUpperCase();
+                
+                const idData = {
+                    id: uniqueId,
+                    fingerprint: fingerprint,
+                    created: new Date().toISOString()
+                };
+
+                // Store in multiple places for persistence
+                const dataString = JSON.stringify(idData);
+                localStorage.setItem(this.storageKey, dataString);
+                await this.storeInIndexedDB(this.storageKey, dataString);
+
+                return {
+                    id: uniqueId,
+                    isNew: true,
+                    created: idData.created
+                };
+            }
         }
 
-        // Else, create new ID and store it
-        const newId = crypto.randomUUID();
-        await new Promise((resolve, reject) => {
-          const tx = db.transaction(storeName, "readwrite");
-          const store = tx.objectStore(storeName);
-          const putRequest = store.put(newId, "device_id");
-          putRequest.onsuccess = () => resolve();
-          putRequest.onerror = () => reject(putRequest.error);
-        });
+        // Initialize and display unique ID on page load
+        async function initializeUniqueId() {
+            const loadingEl = document.getElementById('loadingMessage');
+            const idEl = document.getElementById('uniqueId');
+            const statusEl = document.getElementById('status');
+            
+            try {
+                const generator = new UniqueDeviceId();
+                const result = await generator.getUniqueDeviceId();
+                
+                // Hide loading message
+                loadingEl.style.display = 'none';
+                
+                // Display the unique ID
+                idEl.textContent = result.id;
+                idEl.style.display = 'block';
+                
+                // Show status
+                statusEl.textContent = result.isNew ? 
+                    '✨ New device ID generated' : 
+                    '🔄 Existing device ID retrieved';
+                statusEl.className = 'status success';
+                statusEl.style.display = 'block';
+                
+            } catch (error) {
+                loadingEl.textContent = 'Error generating device ID';
+                console.error('Device ID generation error:', error);
+            }
+        }
 
-        return newId;
-      }
-      (async () => {
-        const id = await getOrCreateDeviceId();
-        document.body.innerHTML += `<p>🆔 Your Device ID: <code>${id}</code></p>`;
-      })();
+        // Start the process when page loads
+        window.addEventListener('load', initializeUniqueId);
     </script>
-  </body>
+</body>
 </html>
